@@ -88,27 +88,27 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   <!--radix_placeholder_meta_tags-->
   <title>colspec</title>
   
-  <meta property="description" itemprop="description" content="Welcome to the website. I hope you enjoy it!"/>
+  <meta property="description" itemprop="description" content="Column specification"/>
   
   
   
   <!--  https://developers.facebook.com/docs/sharing/webmasters#markup -->
   <meta property="og:title" content="colspec"/>
   <meta property="og:type" content="article"/>
-  <meta property="og:description" content="Welcome to the website. I hope you enjoy it!"/>
+  <meta property="og:description" content="Column specification"/>
   <meta property="og:locale" content="en_US"/>
   <meta property="og:site_name" content="colspec"/>
   
   <!--  https://dev.twitter.com/cards/types/summary -->
   <meta property="twitter:card" content="summary"/>
   <meta property="twitter:title" content="colspec"/>
-  <meta property="twitter:description" content="Welcome to the website. I hope you enjoy it!"/>
+  <meta property="twitter:description" content="Column specification"/>
   
   <!--/radix_placeholder_meta_tags-->
   <!--radix_placeholder_rmarkdown_metadata-->
   
   <script type="text/json" id="radix-rmarkdown-metadata">
-  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","site"]}},"value":[{"type":"character","attributes":{},"value":["colspec"]},{"type":"character","attributes":{},"value":["Welcome to the website. I hope you enjoy it!\n"]},{"type":"character","attributes":{},"value":["distill::distill_website"]}]}
+  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","site"]}},"value":[{"type":"character","attributes":{},"value":["colspec"]},{"type":"character","attributes":{},"value":["Column specification\n"]},{"type":"character","attributes":{},"value":["distill::distill_website"]}]}
   </script>
   <!--/radix_placeholder_rmarkdown_metadata-->
   <!--radix_placeholder_navigation_in_header-->
@@ -2052,7 +2052,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <!--radix_placeholder_front_matter-->
 
 <script id="distill-front-matter" type="text/json">
-{"title":"colspec","description":"Welcome to the website. I hope you enjoy it!","authors":[]}
+{"title":"colspec","description":"Column specification","authors":[]}
 </script>
 
 <!--/radix_placeholder_front_matter-->
@@ -2077,12 +2077,595 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <h1>colspec</h1>
 <!--radix_placeholder_categories-->
 <!--/radix_placeholder_categories-->
-<p><p>Welcome to the website. I hope you enjoy it!</p></p>
+<p><p>Column specification</p></p>
 </div>
 
 
 <div class="d-article">
-<div class="sourceCode" id="cb1"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
+<p>Load and prep the various packages we use.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://tidyverse.tidyverse.org'>tidyverse</a></span><span class='op'>)</span>
+</code></pre>
+</div>
+<pre><code>#&gt; ── Attaching packages ───────────────────────────── tidyverse 1.3.1 ──
+#&gt; ✔ ggplot2 3.3.3     ✔ purrr   0.3.4
+#&gt; ✔ tibble  3.1.2     ✔ dplyr   1.0.6
+#&gt; ✔ tidyr   1.1.3     ✔ stringr 1.4.0
+#&gt; ✔ readr   1.4.0     ✔ forcats 0.5.1
+#&gt; ── Conflicts ──────────────────────────────── tidyverse_conflicts() ──
+#&gt; ✖ dplyr::filter() masks stats::filter()
+#&gt; ✖ dplyr::lag()    masks stats::lag()</code></pre>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://readxl.tidyverse.org'>readxl</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://googledrive.tidyverse.org'>googledrive</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://github.com/tidyverse/googlesheets4'>googlesheets4</a></span><span class='op'>)</span>
+</code></pre>
+</div>
+<pre><code>#&gt; 
+#&gt; Attaching package: &#39;googlesheets4&#39;
+#&gt; The following objects are masked from &#39;package:googledrive&#39;:
+#&gt; 
+#&gt;     request_generate, request_make</code></pre>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='fu'><a href='https://googledrive.tidyverse.org/reference/drive_deauth.html'>drive_deauth</a></span><span class='op'>(</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/pkg/googlesheets4/man/gs4_deauth.html'>gs4_deauth</a></span><span class='op'>(</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h2 id="the-deaths-spreadsheet">The <code>deaths</code> spreadsheet</h2>
+<p>We use this <a href="https://docs.google.com/spreadsheets/d/1VTJjWoP1nshbyxmL9JqXgdVsimaYty21LGxxs018H2Y/edit?usp=drivesdk">deaths spreadsheet</a> as a running example. Yes, the dates are formatted in the awful American way, <code>%m/%d/%Y</code>, and there are irritating comments before and after the data.</p>
+<div class="layout-chunk" data-layout="l-body">
+<iframe src="https://docs.google.com/spreadsheets/d/1VTJjWoP1nshbyxmL9JqXgdVsimaYty21LGxxs018H2Y/pub" width="624" height="400px">
+</iframe>
+</div>
+<p>We’ll need this as a csv as well.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='fu'><a href='https://googledrive.tidyverse.org/reference/drive_download.html'>drive_download</a></span><span class='op'>(</span><span class='fu'><a href='https://googledrive.tidyverse.org/reference/as_id.html'>as_id</a></span><span class='op'>(</span><span class='va'>deaths_url</span><span class='op'>)</span>, type <span class='op'>=</span> <span class='st'>"csv"</span>, overwrite <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
+</code></pre>
+</div>
+<pre><code>#&gt; File downloaded:
+#&gt;   * deaths
+#&gt; Saved locally as:
+#&gt;   * deaths.csv</code></pre>
+</div>
+<h2 id="readr">readr</h2>
+<p>readr offers the richest DSL for column specification (compared to: googlesheets4, readxl).</p>
+<p><a href="https://readr.tidyverse.org/reference/index.html#section-column-specification" class="uri">https://readr.tidyverse.org/reference/index.html#section-column-specification</a></p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>deaths_csv</span> <span class='op'>&lt;-</span> <span class='fu'>read_csv</span><span class='op'>(</span>
+  <span class='st'>"deaths.csv"</span>,
+  skip <span class='op'>=</span> <span class='fl'>4</span>, n_max <span class='op'>=</span> <span class='fl'>10</span>,
+  col_types <span class='op'>=</span> <span class='fu'>cols</span><span class='op'>(</span>
+    Name <span class='op'>=</span> <span class='fu'>col_character</span><span class='op'>(</span><span class='op'>)</span>,
+    Profession <span class='op'>=</span> <span class='fu'>col_guess</span><span class='op'>(</span><span class='op'>)</span>,
+    Age <span class='op'>=</span> <span class='fu'>col_integer</span><span class='op'>(</span><span class='op'>)</span>,
+    `Has kids` <span class='op'>=</span> <span class='fu'>col_logical</span><span class='op'>(</span><span class='op'>)</span>,
+    `Date of birth` <span class='op'>=</span> <span class='fu'>col_date</span><span class='op'>(</span><span class='st'>"%m/%d/%Y"</span><span class='op'>)</span>,
+    `Date of death` <span class='op'>=</span> <span class='fu'>col_date</span><span class='op'>(</span><span class='st'>"%m/%d/%Y"</span><span class='op'>)</span>
+  <span class='op'>)</span>
+<span class='op'>)</span>
+<span class='va'>deaths_csv</span>
+</code></pre>
+</div>
+<pre><code>#&gt; # A tibble: 10 x 6
+#&gt;    Name    Profession   Age `Has kids` `Date of birth` `Date of death`
+#&gt;    &lt;chr&gt;   &lt;chr&gt;      &lt;int&gt; &lt;lgl&gt;      &lt;date&gt;          &lt;date&gt;         
+#&gt;  1 David … musician      69 TRUE       1947-01-08      2016-01-10     
+#&gt;  2 Carrie… actor         60 TRUE       1956-10-21      2016-12-27     
+#&gt;  3 Chuck … musician      90 TRUE       1926-10-18      2017-03-18     
+#&gt;  4 Bill P… actor         61 TRUE       1955-05-17      2017-02-25     
+#&gt;  5 Prince  musician      57 TRUE       1958-06-07      2016-04-21     
+#&gt;  6 Alan R… actor         69 FALSE      1946-02-21      2016-01-14     
+#&gt;  7 Floren… actor         82 TRUE       1934-02-14      2016-11-24     
+#&gt;  8 Harper… author        89 FALSE      1926-04-28      2016-02-19     
+#&gt;  9 Zsa Zs… actor         99 TRUE       1917-02-06      2016-12-18     
+#&gt; 10 George… musician      53 FALSE      1963-06-25      2016-12-25</code></pre>
+</div>
+<p>Key features:</p>
+<ul>
+<li>Can specify the intended column type (<code>col_date()</code>) and details needed to parse character data into the intended type (<code>format = "%m/%d/%Y"</code>).</li>
+<li>Can address columns by name or position, falling back to a default.</li>
+<li>More concise specifications are available for simpler situations.</li>
+<li>A specification is a first-class object: an instance of <code>col_spec</code>, which comes offers a few convenience functions.</li>
+</ul>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>deaths_spec</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/stats/spectrum.html'>spec</a></span><span class='op'>(</span><span class='va'>deaths_csv</span><span class='op'>)</span>
+<span class='va'>deaths_spec</span>
+</code></pre>
+</div>
+<pre><code>#&gt; cols(
+#&gt;   Name = col_character(),
+#&gt;   Profession = col_character(),
+#&gt;   Age = col_integer(),
+#&gt;   `Has kids` = col_logical(),
+#&gt;   `Date of birth` = col_date(format = &quot;%m/%d/%Y&quot;),
+#&gt;   `Date of death` = col_date(format = &quot;%m/%d/%Y&quot;)
+#&gt; )</code></pre>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r">
+<span class='fu'>cols_condense</span><span class='op'>(</span><span class='va'>deaths_spec</span><span class='op'>)</span>
+</code></pre>
+</div>
+<pre><code>#&gt; cols(
+#&gt;   .default = col_character(),
+#&gt;   Age = col_integer(),
+#&gt;   `Has kids` = col_logical(),
+#&gt;   `Date of birth` = col_date(format = &quot;%m/%d/%Y&quot;),
+#&gt;   `Date of death` = col_date(format = &quot;%m/%d/%Y&quot;)
+#&gt; )</code></pre>
+</div>
+<p>If you can accept the consequences, column type can be conveyed with single-character shortcodes. With <code>deaths</code>, we must either skip the dates or accept them as character.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='fu'>read_csv</span><span class='op'>(</span>
+  <span class='st'>"deaths.csv"</span>,
+  skip <span class='op'>=</span> <span class='fl'>4</span>, n_max <span class='op'>=</span> <span class='fl'>10</span>,
+  col_types <span class='op'>=</span> <span class='st'>"??i?__"</span>
+<span class='op'>)</span>
+</code></pre>
+</div>
+<pre><code>#&gt; # A tibble: 10 x 4
+#&gt;    Name               Profession   Age `Has kids`
+#&gt;    &lt;chr&gt;              &lt;chr&gt;      &lt;int&gt; &lt;lgl&gt;     
+#&gt;  1 David Bowie        musician      69 TRUE      
+#&gt;  2 Carrie Fisher      actor         60 TRUE      
+#&gt;  3 Chuck Berry        musician      90 TRUE      
+#&gt;  4 Bill Paxton        actor         61 TRUE      
+#&gt;  5 Prince             musician      57 TRUE      
+#&gt;  6 Alan Rickman       actor         69 FALSE     
+#&gt;  7 Florence Henderson actor         82 TRUE      
+#&gt;  8 Harper Lee         author        89 FALSE     
+#&gt;  9 Zsa Zsa Gábor      actor         99 TRUE      
+#&gt; 10 George Michael     musician      53 FALSE</code></pre>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r">
+<span class='fu'>read_csv</span><span class='op'>(</span>
+  <span class='st'>"deaths.csv"</span>,
+  skip <span class='op'>=</span> <span class='fl'>4</span>, n_max <span class='op'>=</span> <span class='fl'>10</span>,
+  col_types <span class='op'>=</span> <span class='fu'>cols</span><span class='op'>(</span>Age <span class='op'>=</span> <span class='st'>"i"</span><span class='op'>)</span>
+<span class='op'>)</span>
+</code></pre>
+</div>
+<pre><code>#&gt; # A tibble: 10 x 6
+#&gt;    Name    Profession   Age `Has kids` `Date of birth` `Date of death`
+#&gt;    &lt;chr&gt;   &lt;chr&gt;      &lt;int&gt; &lt;lgl&gt;      &lt;chr&gt;           &lt;chr&gt;          
+#&gt;  1 David … musician      69 TRUE       1/8/1947        1/10/2016      
+#&gt;  2 Carrie… actor         60 TRUE       10/21/1956      12/27/2016     
+#&gt;  3 Chuck … musician      90 TRUE       10/18/1926      3/18/2017      
+#&gt;  4 Bill P… actor         61 TRUE       5/17/1955       2/25/2017      
+#&gt;  5 Prince  musician      57 TRUE       6/7/1958        4/21/2016      
+#&gt;  6 Alan R… actor         69 FALSE      2/21/1946       1/14/2016      
+#&gt;  7 Floren… actor         82 TRUE       2/14/1934       11/24/2016     
+#&gt;  8 Harper… author        89 FALSE      4/28/1926       2/19/2016      
+#&gt;  9 Zsa Zs… actor         99 TRUE       2/6/1917        12/18/2016     
+#&gt; 10 George… musician      53 FALSE      6/25/1963       12/25/2016</code></pre>
+</div>
+<p><em>I’m not getting into other parsing details, such as <code>quote</code>, <code>locale</code>, <code>na</code>, <code>trim_ws</code>, <code>guess_max</code>.</em></p>
+<h2 id="readxl">readxl</h2>
+<p>The <code>col_types</code> argument of readxl hasn’t changed ?much? since its original release. It’s considerably less flexible than readr. This is probably the top user-facing deficiency at this point.</p>
+<!-- Factoid: readr originally released: 2015-04-09. readxl originally released: 2015-04-14 -->
+<div class="layout-chunk" data-layout="l-screen-inset">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>deaths_xl</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://readxl.tidyverse.org/reference/read_excel.html'>read_excel</a></span><span class='op'>(</span>
+  <span class='fu'><a href='https://readxl.tidyverse.org/reference/readxl_example.html'>readxl_example</a></span><span class='op'>(</span><span class='st'>"deaths.xls"</span><span class='op'>)</span>,
+  range <span class='op'>=</span> <span class='st'>"arts!A5:F15"</span>,
+  <span class='co'># skip = 4, n_max = 10,</span>
+  col_types <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"text"</span>, <span class='st'>"guess"</span>, <span class='st'>"numeric"</span>, <span class='st'>"logical"</span>, <span class='st'>"date"</span>, <span class='st'>"date"</span><span class='op'>)</span>
+  
+<span class='op'>)</span>
+<span class='va'>deaths_xl</span>
+</code></pre>
+</div>
+<pre><code>#&gt; # A tibble: 10 x 6
+#&gt;    Name               Profession   Age `Has kids` `Date of birth`    
+#&gt;    &lt;chr&gt;              &lt;chr&gt;      &lt;dbl&gt; &lt;lgl&gt;      &lt;dttm&gt;             
+#&gt;  1 David Bowie        musician      69 TRUE       1947-01-08 00:00:00
+#&gt;  2 Carrie Fisher      actor         60 TRUE       1956-10-21 00:00:00
+#&gt;  3 Chuck Berry        musician      90 TRUE       1926-10-18 00:00:00
+#&gt;  4 Bill Paxton        actor         61 TRUE       1955-05-17 00:00:00
+#&gt;  5 Prince             musician      57 TRUE       1958-06-07 00:00:00
+#&gt;  6 Alan Rickman       actor         69 FALSE      1946-02-21 00:00:00
+#&gt;  7 Florence Henderson actor         82 TRUE       1934-02-14 00:00:00
+#&gt;  8 Harper Lee         author        89 FALSE      1926-04-28 00:00:00
+#&gt;  9 Zsa Zsa Gábor      actor         99 TRUE       1917-02-06 00:00:00
+#&gt; 10 George Michael     musician      53 FALSE      1963-06-25 00:00:00
+#&gt; # … with 1 more variable: Date of death &lt;dttm&gt;</code></pre>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r">
+<span class='fu'>waldo</span><span class='fu'>::</span><span class='fu'>compare</span><span class='op'>(</span><span class='va'>deaths_xl</span>, <span class='va'>deaths_csv</span><span class='op'>)</span>
+</code></pre>
+</div>
+<pre><code>#&gt; Error in loadNamespace(x): there is no package called &#39;waldo&#39;</code></pre>
+</div>
+<p>Also notice: can’t specify integer or date, only numeric and date(time).</p>
+<p>The one thing readxl has that’s arguably missing in readr is the <code>list</code> column type. Results in a list of length 1 vectors, with type-guessing at the individual cell level.</p>
+<p>To demo this, we’ll use the <code>clippy</code> example spreadsheet.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>clippy</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://readxl.tidyverse.org/reference/read_excel.html'>read_excel</a></span><span class='op'>(</span>
+  <span class='fu'><a href='https://readxl.tidyverse.org/reference/readxl_example.html'>readxl_example</a></span><span class='op'>(</span><span class='st'>"clippy.xlsx"</span><span class='op'>)</span>,
+  col_types <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"text"</span>, <span class='st'>"list"</span><span class='op'>)</span>
+<span class='op'>)</span>
+<span class='va'>clippy</span>
+</code></pre>
+</div>
+<pre><code>#&gt; # A tibble: 4 x 2
+#&gt;   name                 value     
+#&gt;   &lt;chr&gt;                &lt;list&gt;    
+#&gt; 1 Name                 &lt;chr [1]&gt; 
+#&gt; 2 Species              &lt;chr [1]&gt; 
+#&gt; 3 Approx date of death &lt;dttm [1]&gt;
+#&gt; 4 Weight in grams      &lt;dbl [1]&gt;</code></pre>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r">
+<span class='va'>clippy</span><span class='op'>$</span><span class='va'>value</span>
+</code></pre>
+</div>
+<pre><code>#&gt; [[1]]
+#&gt; [1] &quot;Clippy&quot;
+#&gt; 
+#&gt; [[2]]
+#&gt; [1] &quot;paperclip&quot;
+#&gt; 
+#&gt; [[3]]
+#&gt; [1] &quot;2007-01-01 UTC&quot;
+#&gt; 
+#&gt; [[4]]
+#&gt; [1] 0.9</code></pre>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r">
+<span class='fu'>map</span><span class='op'>(</span><span class='va'>clippy</span><span class='op'>$</span><span class='va'>value</span>, <span class='va'>class</span><span class='op'>)</span>
+</code></pre>
+</div>
+<pre><code>#&gt; [[1]]
+#&gt; [1] &quot;character&quot;
+#&gt; 
+#&gt; [[2]]
+#&gt; [1] &quot;character&quot;
+#&gt; 
+#&gt; [[3]]
+#&gt; [1] &quot;POSIXct&quot; &quot;POSIXt&quot; 
+#&gt; 
+#&gt; [[4]]
+#&gt; [1] &quot;numeric&quot;</code></pre>
+</div>
+<h2 id="googlesheets4">googlesheets4</h2>
+<p>The <code>col_types</code> argument of googlesheets4 presents a specific subset of readr’s DSL: a string of single-character shortcodes. That’s it, that’s all that’s supported. The idea was to avoid creating yet another <code>col_types</code> system. But this leaves googlesheets4’s <code>col_types</code> argument as considerably less powerful than readr’s.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='fu'><a href='https://rdrr.io/pkg/googlesheets4/man/gs4_example.html'>gs4_example</a></span><span class='op'>(</span><span class='st'>"deaths"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'><a href='https://rdrr.io/pkg/googlesheets4/man/range_read.html'>read_sheet</a></span><span class='op'>(</span>range <span class='op'>=</span> <span class='st'>"arts_data"</span>, col_types <span class='op'>=</span> <span class='st'>"??i??D"</span><span class='op'>)</span>
+</code></pre>
+</div>
+<pre><code>#&gt; Reading from &quot;deaths&quot;
+#&gt; Range &quot;arts_data&quot;
+#&gt; # A tibble: 10 x 6
+#&gt;    Name               Profession   Age `Has kids` `Date of birth`    
+#&gt;    &lt;chr&gt;              &lt;chr&gt;      &lt;int&gt; &lt;lgl&gt;      &lt;dttm&gt;             
+#&gt;  1 David Bowie        musician      69 TRUE       1947-01-08 00:00:00
+#&gt;  2 Carrie Fisher      actor         60 TRUE       1956-10-21 00:00:00
+#&gt;  3 Chuck Berry        musician      90 TRUE       1926-10-18 00:00:00
+#&gt;  4 Bill Paxton        actor         61 TRUE       1955-05-17 00:00:00
+#&gt;  5 Prince             musician      57 TRUE       1958-06-07 00:00:00
+#&gt;  6 Alan Rickman       actor         69 FALSE      1946-02-21 00:00:00
+#&gt;  7 Florence Henderson actor         82 TRUE       1934-02-14 00:00:00
+#&gt;  8 Harper Lee         author        89 FALSE      1926-04-28 00:00:00
+#&gt;  9 Zsa Zsa Gábor      actor         99 TRUE       1917-02-06 00:00:00
+#&gt; 10 George Michael     musician      53 FALSE      1963-06-25 00:00:00
+#&gt; # … with 1 more variable: Date of death &lt;date&gt;</code></pre>
+</div>
+<p>Compared to readxl:</p>
+<ul>
+<li>Supports explicit request for <code>integer</code> (see <code>Age</code>)</li>
+<li>Successfully guesses datetime for <code>Date of birth</code></li>
+<li>Supports explicit request for <code>Date</code> (see <code>Date of death</code>)</li>
+</ul>
+<p>For performance, we offer <code>range_speedread()</code>, which bypasses the Sheets API and reads csv, with readr, through a special URL.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='fu'><a href='https://rdrr.io/pkg/googlesheets4/man/gs4_example.html'>gs4_example</a></span><span class='op'>(</span><span class='st'>"deaths"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'><a href='https://rdrr.io/pkg/googlesheets4/man/range_speedread.html'>range_speedread</a></span><span class='op'>(</span>
+    range <span class='op'>=</span> <span class='st'>"other!A5:F15"</span>,
+    col_types <span class='op'>=</span> <span class='fu'>readr</span><span class='fu'>::</span><span class='fu'><a href='https://readr.tidyverse.org/reference/cols.html'>cols</a></span><span class='op'>(</span>
+      Age <span class='op'>=</span> <span class='fu'>readr</span><span class='fu'>::</span><span class='fu'><a href='https://readr.tidyverse.org/reference/parse_atomic.html'>col_integer</a></span><span class='op'>(</span><span class='op'>)</span>,
+      `Date of birth` <span class='op'>=</span> <span class='fu'>readr</span><span class='fu'>::</span><span class='fu'><a href='https://readr.tidyverse.org/reference/parse_datetime.html'>col_date</a></span><span class='op'>(</span><span class='st'>"%m/%d/%Y"</span><span class='op'>)</span>,
+      `Date of death` <span class='op'>=</span> <span class='fu'>readr</span><span class='fu'>::</span><span class='fu'><a href='https://readr.tidyverse.org/reference/parse_datetime.html'>col_date</a></span><span class='op'>(</span><span class='st'>"%m/%d/%Y"</span><span class='op'>)</span>
+    <span class='op'>)</span>
+  <span class='op'>)</span>
+</code></pre>
+</div>
+<pre><code>#&gt; Reading from &quot;deaths&quot;, &quot;other&quot; sheet, range &quot;A5:F15&quot;
+#&gt; Export URL: https://docs.google.com/spreadsheets/d/1VTJjWoP1nshbyxmL9JqXgdVsimaYty21LGxxs018H2Y/export?format=csv&amp;range=A5%3AF15&amp;gid=278837031
+#&gt; # A tibble: 10 x 6
+#&gt;    Name    Profession   Age `Has kids` `Date of birth` `Date of death`
+#&gt;    &lt;chr&gt;   &lt;chr&gt;      &lt;int&gt; &lt;lgl&gt;      &lt;date&gt;          &lt;date&gt;         
+#&gt;  1 Vera R… scientist     88 TRUE       1928-07-23      2016-12-25     
+#&gt;  2 Mohame… athlete       74 TRUE       1942-01-17      2016-06-03     
+#&gt;  3 Morley… journalist    84 TRUE       1931-11-08      2016-05-19     
+#&gt;  4 Fidel … politician    90 TRUE       1926-08-13      2016-11-25     
+#&gt;  5 Antoni… lawyer        79 TRUE       1936-03-11      2016-02-13     
+#&gt;  6 Jo Cox  politician    41 TRUE       1974-06-22      2016-06-16     
+#&gt;  7 Janet … lawyer        78 FALSE      1938-07-21      2016-11-07     
+#&gt;  8 Gwen I… journalist    61 FALSE      1955-09-29      2016-11-14     
+#&gt;  9 John G… astronaut     95 TRUE       1921-07-28      2016-12-08     
+#&gt; 10 Pat Su… coach         64 TRUE       1952-06-14      2016-06-28</code></pre>
+</div>
+<p>This really drives home that all of our <code>col_types</code> arguments are connected to each other, at the very least in our user’s mind, and often in more profound ways.</p>
+<p>googlesheets4 also has a few innovations. Like readxl, googlesheets4 supports the <code>"list"</code> column type, where each cell gets its most suitable type.</p>
+<p>Unique to googlesheets4 is the <code>"cell"</code> column type, which reveals all the gory details about cell, in the spreadsheet sense. Consider the <a href="https://docs.google.com/spreadsheets/d/1wPLrWOxxEjp3T1nv2YBxn63FX70Mz5W5Tm4tGc-lRms/edit?usp=drivesdk">formulas-and-formats spreadsheet</a> example Sheet.</p>
+<div class="layout-chunk" data-layout="l-body">
+<iframe src="https://docs.google.com/spreadsheets/d/1wPLrWOxxEjp3T1nv2YBxn63FX70Mz5W5Tm4tGc-lRms/pub" width="624" height="400px">
+</iframe>
+</div>
+<p>Let’s use a more primitive function to inspect the hyperlink cell E2.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>x</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/pkg/googlesheets4/man/gs4_example.html'>gs4_example</a></span><span class='op'>(</span><span class='st'>"formulas-and-formats"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'><a href='https://rdrr.io/pkg/googlesheets4/man/range_read_cells.html'>range_read_cells</a></span><span class='op'>(</span>range <span class='op'>=</span> <span class='st'>"E2:E2"</span>, cell_data <span class='op'>=</span> <span class='st'>"full"</span><span class='op'>)</span>
+</code></pre>
+</div>
+<pre><code>#&gt; Reading from &quot;formulas-and-formats&quot;
+#&gt; Range &quot;E2:E2&quot;</code></pre>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>x</span>
+</code></pre>
+</div>
+<pre><code>#&gt; # A tibble: 1 x 4
+#&gt;     row   col loc   cell      
+#&gt;   &lt;int&gt; &lt;int&gt; &lt;chr&gt; &lt;list&gt;    
+#&gt; 1     2     5 E2    &lt;CELL_TEX&gt;</code></pre>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r">
+<span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>$</span><span class='va'>cell</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>)</span>
+</code></pre>
+</div>
+<pre><code>#&gt; List of 6
+#&gt;  $ userEnteredValue :List of 1
+#&gt;   ..$ formulaValue: chr &quot;=HYPERLINK(\&quot;http://www.google.com/\&quot;,\&quot;Google\&quot;)&quot;
+#&gt;  $ effectiveValue   :List of 1
+#&gt;   ..$ stringValue: chr &quot;Google&quot;
+#&gt;  $ formattedValue   : chr &quot;Google&quot;
+#&gt;  $ userEnteredFormat:List of 1
+#&gt;   ..$ textFormat:List of 1
+#&gt;   .. ..$ link:List of 1
+#&gt;   .. .. ..$ uri: chr &quot;http://www.google.com/&quot;
+#&gt;  $ effectiveFormat  :List of 8
+#&gt;   ..$ backgroundColor     :List of 3
+#&gt;   .. ..$ red  : int 1
+#&gt;   .. ..$ green: int 1
+#&gt;   .. ..$ blue : int 1
+#&gt;   ..$ padding             :List of 2
+#&gt;   .. ..$ right: int 3
+#&gt;   .. ..$ left : int 3
+#&gt;   ..$ horizontalAlignment : chr &quot;LEFT&quot;
+#&gt;   ..$ verticalAlignment   : chr &quot;BOTTOM&quot;
+#&gt;   ..$ wrapStrategy        : chr &quot;OVERFLOW_CELL&quot;
+#&gt;   ..$ textFormat          :List of 9
+#&gt;   .. ..$ foregroundColor     :List of 1
+#&gt;   .. .. ..$ blue: int 1
+#&gt;   .. ..$ fontFamily          : chr &quot;Calibri&quot;
+#&gt;   .. ..$ fontSize            : int 10
+#&gt;   .. ..$ bold                : logi FALSE
+#&gt;   .. ..$ italic              : logi FALSE
+#&gt;   .. ..$ strikethrough       : logi FALSE
+#&gt;   .. ..$ underline           : logi TRUE
+#&gt;   .. ..$ foregroundColorStyle:List of 1
+#&gt;   .. .. ..$ rgbColor:List of 1
+#&gt;   .. .. .. ..$ blue: int 1
+#&gt;   .. ..$ link                :List of 1
+#&gt;   .. .. ..$ uri: chr &quot;http://www.google.com/&quot;
+#&gt;   ..$ hyperlinkDisplayType: chr &quot;LINKED&quot;
+#&gt;   ..$ backgroundColorStyle:List of 1
+#&gt;   .. ..$ rgbColor:List of 3
+#&gt;   .. .. ..$ red  : int 1
+#&gt;   .. .. ..$ green: int 1
+#&gt;   .. .. ..$ blue : int 1
+#&gt;  $ hyperlink        : chr &quot;http://www.google.com/&quot;
+#&gt;  - attr(*, &quot;class&quot;)= chr [1:2] &quot;CELL_TEXT&quot; &quot;SHEETS_CELL&quot;</code></pre>
+</div>
+<p>I show to make two points:</p>
+<ul>
+<li>It’s nice that googlesheets4 can expose this for the user that needs it. We have to have this internally anyway. I wish readxl did similar.</li>
+<li>Creating R “atoms” and columns from spreadsheet data is very different than doing the same for, say, csv. We have a lot more info!</li>
+</ul>
+<h2 id="tidyr-and-vctrs">tidyr (and vctrs)</h2>
+<p>The new-ish rectangling features in tidyr essentially expose another DSL for how to specify the type of new columns, influenced by the vctrs package and its notion of <strong>prototype</strong>.</p>
+<p>Note this is a related, but distinct problem space, because we are no longer <em>parsing</em> external data into new R columns. This is a fully “within R” operation.</p>
+<h3 id="pivot_wider"><code>pivot_wider()</code></h3>
+<p><em>I realized once I started this that <code>pivot_wider()</code> currently does not support what I wanted to show! It does have a concept of a pivot spec, but currently it does not have anything to do with column type. <code>pivot_wider()</code> certainly could produce columns of disparate type, if it was instructed to implement a spec.</em></p>
+<p>I read <code>deaths</code> in again, but universally as <code>character</code>, then use <code>pivot_longer()</code> on it.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>deaths_character</span> <span class='op'>&lt;-</span> <span class='fu'>read_csv</span><span class='op'>(</span>
+  <span class='st'>"deaths.csv"</span>,
+  skip <span class='op'>=</span> <span class='fl'>4</span>, n_max <span class='op'>=</span> <span class='fl'>10</span>,
+  col_types <span class='op'>=</span> <span class='fu'>cols</span><span class='op'>(</span>.default <span class='op'>=</span> <span class='fu'>col_character</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>
+<span class='op'>)</span>
+
+<span class='va'>deaths_character_long</span> <span class='op'>&lt;-</span> <span class='va'>deaths_character</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>rowid_to_column</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>pivot_longer</span><span class='op'>(</span><span class='op'>-</span><span class='va'>rowid</span><span class='op'>)</span>
+<span class='va'>deaths_character_long</span>
+</code></pre>
+</div>
+<pre><code>#&gt; # A tibble: 60 x 3
+#&gt;    rowid name          value        
+#&gt;    &lt;int&gt; &lt;chr&gt;         &lt;chr&gt;        
+#&gt;  1     1 Name          David Bowie  
+#&gt;  2     1 Profession    musician     
+#&gt;  3     1 Age           69           
+#&gt;  4     1 Has kids      TRUE         
+#&gt;  5     1 Date of birth 1/8/1947     
+#&gt;  6     1 Date of death 1/10/2016    
+#&gt;  7     2 Name          Carrie Fisher
+#&gt;  8     2 Profession    actor        
+#&gt;  9     2 Age           60           
+#&gt; 10     2 Has kids      TRUE         
+#&gt; # … with 50 more rows</code></pre>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r">
+<span class='co'># another way to get an ID column, seen in rectangling vignette</span>
+<span class='co'># deaths_character %&gt;% </span>
+<span class='co'>#   mutate(rowid = cumsum(name == "Name"))</span>
+</code></pre>
+</div>
+</div>
+<p>Now we accomplish what a proper import would do, but with tidyr’s toolkit. <strong>Nope, no we don’t, because <code>pivot_wider()</code> doesn’t support this. At this point, we’d use readr’s parsers on the columns.</strong></p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>deaths_character_long</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>pivot_wider</span><span class='op'>(</span>
+    id_cols <span class='op'>=</span> <span class='va'>rowid</span>,
+    <span class='op'>)</span>
+</code></pre>
+</div>
+<pre><code>#&gt; # A tibble: 10 x 7
+#&gt;    rowid Name              Profession Age   `Has kids` `Date of birth`
+#&gt;    &lt;int&gt; &lt;chr&gt;             &lt;chr&gt;      &lt;chr&gt; &lt;chr&gt;      &lt;chr&gt;          
+#&gt;  1     1 David Bowie       musician   69    TRUE       1/8/1947       
+#&gt;  2     2 Carrie Fisher     actor      60    TRUE       10/21/1956     
+#&gt;  3     3 Chuck Berry       musician   90    TRUE       10/18/1926     
+#&gt;  4     4 Bill Paxton       actor      61    TRUE       5/17/1955      
+#&gt;  5     5 Prince            musician   57    TRUE       6/7/1958       
+#&gt;  6     6 Alan Rickman      actor      69    FALSE      2/21/1946      
+#&gt;  7     7 Florence Henders… actor      82    TRUE       2/14/1934      
+#&gt;  8     8 Harper Lee        author     89    FALSE      4/28/1926      
+#&gt;  9     9 Zsa Zsa Gábor     actor      99    TRUE       2/6/1917       
+#&gt; 10    10 George Michael    musician   53    FALSE      6/25/1963      
+#&gt; # … with 1 more variable: Date of death &lt;chr&gt;</code></pre>
+</div>
+<h3 id="unnest_wider"><code>unnest_wider()</code></h3>
+<p>First, prepare the deaths data: read in as character and then transpose. We get a list, with one component per row = person.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>deaths_character</span> <span class='op'>&lt;-</span> <span class='fu'>read_csv</span><span class='op'>(</span>
+  <span class='st'>"deaths.csv"</span>,
+  skip <span class='op'>=</span> <span class='fl'>4</span>, n_max <span class='op'>=</span> <span class='fl'>10</span>,
+  col_types <span class='op'>=</span> <span class='fu'>cols</span><span class='op'>(</span>.default <span class='op'>=</span> <span class='fu'>col_character</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>
+<span class='op'>)</span>
+
+<span class='va'>deaths_character_transpose</span> <span class='op'>&lt;-</span> <span class='va'>deaths_character</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>transpose</span><span class='op'>(</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/head.html'>head</a></span><span class='op'>(</span><span class='va'>deaths_character_transpose</span>, <span class='fl'>2</span><span class='op'>)</span>
+</code></pre>
+</div>
+<pre><code>#&gt; [[1]]
+#&gt; [[1]]$Name
+#&gt; [1] &quot;David Bowie&quot;
+#&gt; 
+#&gt; [[1]]$Profession
+#&gt; [1] &quot;musician&quot;
+#&gt; 
+#&gt; [[1]]$Age
+#&gt; [1] &quot;69&quot;
+#&gt; 
+#&gt; [[1]]$`Has kids`
+#&gt; [1] &quot;TRUE&quot;
+#&gt; 
+#&gt; [[1]]$`Date of birth`
+#&gt; [1] &quot;1/8/1947&quot;
+#&gt; 
+#&gt; [[1]]$`Date of death`
+#&gt; [1] &quot;1/10/2016&quot;
+#&gt; 
+#&gt; 
+#&gt; [[2]]
+#&gt; [[2]]$Name
+#&gt; [1] &quot;Carrie Fisher&quot;
+#&gt; 
+#&gt; [[2]]$Profession
+#&gt; [1] &quot;actor&quot;
+#&gt; 
+#&gt; [[2]]$Age
+#&gt; [1] &quot;60&quot;
+#&gt; 
+#&gt; [[2]]$`Has kids`
+#&gt; [1] &quot;TRUE&quot;
+#&gt; 
+#&gt; [[2]]$`Date of birth`
+#&gt; [1] &quot;10/21/1956&quot;
+#&gt; 
+#&gt; [[2]]$`Date of death`
+#&gt; [1] &quot;12/27/2016&quot;</code></pre>
+</div>
+<p>Re-create <code>deaths_csv</code> via <code>unnest_wider()</code>. First, without worrying about column types.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>dat</span> <span class='op'>&lt;-</span> <span class='fu'>tibble</span><span class='op'>(</span>stuff <span class='op'>=</span> <span class='va'>deaths_character_transpose</span><span class='op'>)</span>
+
+<span class='va'>dat</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>unnest_wider</span><span class='op'>(</span><span class='va'>stuff</span><span class='op'>)</span>
+</code></pre>
+</div>
+<pre><code>#&gt; # A tibble: 10 x 6
+#&gt;    Name    Profession Age   `Has kids` `Date of birth` `Date of death`
+#&gt;    &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt; &lt;chr&gt;      &lt;chr&gt;           &lt;chr&gt;          
+#&gt;  1 David … musician   69    TRUE       1/8/1947        1/10/2016      
+#&gt;  2 Carrie… actor      60    TRUE       10/21/1956      12/27/2016     
+#&gt;  3 Chuck … musician   90    TRUE       10/18/1926      3/18/2017      
+#&gt;  4 Bill P… actor      61    TRUE       5/17/1955       2/25/2017      
+#&gt;  5 Prince  musician   57    TRUE       6/7/1958        4/21/2016      
+#&gt;  6 Alan R… actor      69    FALSE      2/21/1946       1/14/2016      
+#&gt;  7 Floren… actor      82    TRUE       2/14/1934       11/24/2016     
+#&gt;  8 Harper… author     89    FALSE      4/28/1926       2/19/2016      
+#&gt;  9 Zsa Zs… actor      99    TRUE       2/6/1917        12/18/2016     
+#&gt; 10 George… musician   53    FALSE      6/25/1963       12/25/2016</code></pre>
+</div>
+<p>Now we’ll use <code>.transform</code> to get correct column types.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>deaths_wider</span> <span class='op'>&lt;-</span> <span class='va'>dat</span> <span class='op'>%&gt;%</span> 
+  <span class='fu'>unnest_wider</span><span class='op'>(</span>
+    <span class='va'>stuff</span>,
+    transform <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>
+      Age <span class='op'>=</span> <span class='va'>as.integer</span>,
+      `Has kids` <span class='op'>=</span> <span class='va'>as.logical</span>,
+      `Date of birth` <span class='op'>=</span> <span class='op'>~</span> <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='va'>.x</span>, format <span class='op'>=</span> <span class='st'>"%m/%d/%Y"</span><span class='op'>)</span>,
+      `Date of death` <span class='op'>=</span> <span class='op'>~</span> <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='va'>.x</span>, format <span class='op'>=</span> <span class='st'>"%m/%d/%Y"</span><span class='op'>)</span>
+      <span class='op'>)</span>
+  <span class='op'>)</span>
+<span class='va'>deaths_wider</span>
+</code></pre>
+</div>
+<pre><code>#&gt; # A tibble: 10 x 6
+#&gt;    Name    Profession   Age `Has kids` `Date of birth` `Date of death`
+#&gt;    &lt;chr&gt;   &lt;chr&gt;      &lt;int&gt; &lt;lgl&gt;      &lt;date&gt;          &lt;date&gt;         
+#&gt;  1 David … musician      69 TRUE       1947-01-08      2016-01-10     
+#&gt;  2 Carrie… actor         60 TRUE       1956-10-21      2016-12-27     
+#&gt;  3 Chuck … musician      90 TRUE       1926-10-18      2017-03-18     
+#&gt;  4 Bill P… actor         61 TRUE       1955-05-17      2017-02-25     
+#&gt;  5 Prince  musician      57 TRUE       1958-06-07      2016-04-21     
+#&gt;  6 Alan R… actor         69 FALSE      1946-02-21      2016-01-14     
+#&gt;  7 Floren… actor         82 TRUE       1934-02-14      2016-11-24     
+#&gt;  8 Harper… author        89 FALSE      1926-04-28      2016-02-19     
+#&gt;  9 Zsa Zs… actor         99 TRUE       1917-02-06      2016-12-18     
+#&gt; 10 George… musician      53 FALSE      1963-06-25      2016-12-25</code></pre>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r">
+<span class='fu'>waldo</span><span class='fu'>::</span><span class='fu'>compare</span><span class='op'>(</span><span class='va'>deaths_csv</span>, <span class='va'>deaths_wider</span><span class='op'>)</span>
+</code></pre>
+</div>
+<pre><code>#&gt; Error in loadNamespace(x): there is no package called &#39;waldo&#39;</code></pre>
+</div>
+<p>There’s also a <code>ptype</code> argument that is currently used just for checking. But I wonder, if for simple <code>as.WHATEVER</code> transformations, if it could do double duty?</p>
+<h2 id="for-discussion">For discussion</h2>
+<p>We have a long-running Google doc about this, that predates the existence of vctrs</p>
+<p>Emulating readr’s DSL fully feels like the (a?) right answer for readxl and googlesheets4. But currently a readr col spec is very much expressed in terms of readr-only objects, e.g. collectors.</p>
+<p>Do we have an appetite for extracting col spec into something more abstract? tidyr’s “wider/hoist spec” starts to hint at this.</p>
+<p>From old google doc:</p>
+<ul>
+<li>Col spec as a tibble, one row per column, maybe one row for defaults?</li>
+<li>Address columns by name or position/index/location</li>
+<li><code>parse_as</code>, <code>parse_params</code></li>
+<li>Col spec can be constructed <em>de novo</em> or discovered from an object</li>
+<li>Shared infrastructure re: problems, i.e. what happens when a spec meets real world data?</li>
+</ul>
+<p>What about transmitting more re: the input to the resulting column? I’m talking about dates, datetimes, (in the future) percentage, currency, rounding / scientific notation.</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
 <!--radix_placeholder_article_footer-->
 <!--/radix_placeholder_article_footer-->
 </div>
