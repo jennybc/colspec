@@ -315,11 +315,21 @@ But I wonder, if for simple `as.WHATEVER` transformations, if it could do double
 
 ## For discussion
 
+We have a long-running Google doc about this, that predates the existence of vctrs
+
 Emulating readr's DSL fully feels like the (a?) right answer for readxl and googlesheets4.
 But currently a readr col spec is very much expressed in terms of readr-only objects, e.g. collectors.
 
 Do we have an appetite for extracting col spec into something more abstract?
 tidyr's "wider/hoist spec" starts to hint at this.
+
+From old google doc:
+
+* Col spec as a tibble, one row per column, maybe one row for defaults?
+* Address columns by name or position/index/location
+* `parse_as`, `parse_params`
+* Col spec can be constructed *de novo* or discovered from an object
+* Shared infrastructure re: problems, i.e. what happens when a spec meets real world data?
 
 What about transmitting more re: the input to the resulting column?
 I'm talking about dates, datetimes, (in the future) percentage, currency, rounding / scientific notation.
