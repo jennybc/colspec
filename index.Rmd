@@ -1,15 +1,325 @@
 ---
 title: "colspec"
 description: |
-  Welcome to the website. I hope you enjoy it!
+  Column specification
 site: distill::distill_website
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  message = TRUE,
+  error = TRUE
+)
 
 # Learn more about creating websites with Distill at:
 # https://rstudio.github.io/distill/website.html
 
+# 'Spec for colspec' google doc
+#https://docs.google.com/document/d/1XyXlyZ108OgXgCcEBwpzuH8OC17Bu6Juv-txtepbyMw/
 ```
 
+Load and prep the various packages we use.
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(googledrive)
+library(googlesheets4)
+drive_deauth()
+gs4_deauth()
+```
+
+## The `deaths` spreadsheet
+
+```{r, include = FALSE}
+# gs4_examples()
+deaths_url <- drive_link(gs4_example("deaths"))
+
+# About publishing and embedding a Sheet
+# https://support.google.com/docs/answer/183965
+deaths_md_link <- glue::glue("[deaths spreadsheet]({deaths_url})")
+deaths_embed <- sub("/edit.+", "/pub", deaths_url)
+```
+
+We use this `r deaths_md_link` as a running example.
+Yes, the dates are formatted in the awful American way, `%m/%d/%Y`, and there are
+irritating comments before and after the data.
+
+```{r, echo = FALSE}
+knitr::include_url(deaths_embed)
+```
+
+We'll need this as a csv as well.
+
+```{r}
+drive_download(as_id(deaths_url), type = "csv", overwrite = TRUE)
+```
+
+```{r, include = FALSE, eval = FALSE}
+# in the past, I created this csv from .xls, then did hand-editing
+# deaths_peek <- read_excel(readxl_example("deaths.xls"), range = "arts!A5:F15")
+# write_csv(deaths_peek, "deaths.csv")
+```
+
+## readr
+
+readr offers the richest DSL for column specification (compared to: googlesheets4, readxl).
+
+<https://readr.tidyverse.org/reference/index.html#section-column-specification>
+
+```{r}
+deaths_csv <- read_csv(
+  "deaths.csv",
+  skip = 4, n_max = 10,
+  col_types = cols(
+    Name = col_character(),
+    Profession = col_guess(),
+    Age = col_integer(),
+    `Has kids` = col_logical(),
+    `Date of birth` = col_date("%m/%d/%Y"),
+    `Date of death` = col_date("%m/%d/%Y")
+  )
+)
+deaths_csv
+```
+
+Key features:
+
+  * Can specify the intended column type (`col_date()`) and details needed to
+    parse character data into the intended type (`format = "%m/%d/%Y"`).
+  * Can address columns by name or position, falling back to a default.
+  * More concise specifications are available for simpler situations.
+  * A specification is a first-class object: an instance of `col_spec`, which
+    comes offers a few convenience functions.
+
+```{r}
+deaths_spec <- spec(deaths_csv)
+deaths_spec
+
+cols_condense(deaths_spec)
+```
+
+If you can accept the consequences, column type can be conveyed with single-character shortcodes.
+With `deaths`, we must either skip the dates or accept them as character.
+
+```{r}
+read_csv(
+  "deaths.csv",
+  skip = 4, n_max = 10,
+  col_types = "??i?__"
+)
+
+read_csv(
+  "deaths.csv",
+  skip = 4, n_max = 10,
+  col_types = cols(Age = "i")
+)
+```
+
+*I'm not getting into other parsing details, such as `quote`, `locale`, `na`, `trim_ws`, `guess_max`.*
+
+## readxl
+
+The `col_types` argument of readxl hasn't changed ?much? since its original release.
+It's considerably less flexible than readr.
+This is probably the top user-facing deficiency at this point.
+
+<!-- Factoid: readr originally released: 2015-04-09. readxl originally released: 2015-04-14 -->
+
+```{r, layout="l-screen-inset"}
+deaths_xl <- read_excel(
+  readxl_example("deaths.xls"),
+  range = "arts!A5:F15",
+  # skip = 4, n_max = 10,
+  col_types = c("text", "guess", "numeric", "logical", "date", "date")
+  
+)
+deaths_xl
+
+waldo::compare(deaths_xl, deaths_csv)
+```
+
+Also notice: can't specify integer or date, only numeric and date(time).
+
+The one thing readxl has that's arguably missing in readr is the `list` column type.
+Results in a list of length 1 vectors, with type-guessing at the individual cell level.
+
+To demo this, we'll use the `clippy` example spreadsheet.
+
+```{r}
+clippy <- read_excel(
+  readxl_example("clippy.xlsx"),
+  col_types = c("text", "list")
+)
+clippy
+
+clippy$value
+
+map(clippy$value, class)
+```
+
+## googlesheets4
+
+The `col_types` argument of googlesheets4 presents a specific subset of readr's DSL: a string of single-character shortcodes.
+That's it, that's all that's supported.
+The idea was to avoid creating yet another `col_types` system.
+But this leaves googlesheets4's `col_types` argument as considerably less powerful than readr's.
+
+```{r}
+gs4_example("deaths") %>% 
+  read_sheet(range = "arts_data", col_types = "??i??D")
+```
+
+Compared to readxl:
+
+* Supports explicit request for `integer` (see `Age`)
+* Successfully guesses datetime for `Date of birth`
+* Supports explicit request for `Date` (see `Date of death`)
+
+For performance, we offer `range_speedread()`, which bypasses the Sheets API and reads csv, with readr, through a special URL.
+
+```{r}
+gs4_example("deaths") %>% 
+  range_speedread(
+    range = "other!A5:F15",
+    col_types = readr::cols(
+      Age = readr::col_integer(),
+      `Date of birth` = readr::col_date("%m/%d/%Y"),
+      `Date of death` = readr::col_date("%m/%d/%Y")
+    )
+  )
+```
+
+This really drives home that all of our `col_types` arguments are connected to each other, at the very least in our user's mind, and often in more profound ways.
+
+googlesheets4 also has a few innovations.
+Like readxl, googlesheets4 supports the `"list"` column type, where each cell gets its most suitable type.
+
+```{r, include = FALSE}
+# gs4_examples()
+ff_url <- drive_link(gs4_example("formulas-and-formats"))
+ff_md_link <- glue::glue("[formulas-and-formats spreadsheet]({ff_url})")
+ff_embed <- sub("/edit.+", "/pub", ff_url)
+```
+
+Unique to googlesheets4 is the `"cell"` column type, which reveals all the gory details about cell, in the spreadsheet sense.
+Consider the `r ff_md_link` example Sheet.
+
+```{r, echo = FALSE}
+knitr::include_url(ff_embed)
+```
+
+Let's use a more primitive function to inspect the hyperlink cell E2.
+
+```{r}
+x <- gs4_example("formulas-and-formats") %>% 
+  range_read_cells(range = "E2:E2", cell_data = "full")
+x
+
+str(x$cell[[1]])
+```
+
+I show to make two points:
+
+* It's nice that googlesheets4 can expose this for the user that needs it. We have to have this internally anyway. I wish readxl did similar.
+* Creating R "atoms" and columns from spreadsheet data is very different than doing the same for, say, csv. We have a lot more info!
+
+## tidyr (and vctrs)
+
+The new-ish rectangling features in tidyr essentially expose another DSL for how to specify the type of new columns, influenced by the vctrs package and its notion of **prototype**.
+
+Note this is a related, but distinct problem space, because we are no longer *parsing* external data into new R columns.
+This is a fully "within R" operation.
+
+### `pivot_wider()`
+
+*I realized once I started this that `pivot_wider()` currently does not support what I wanted to show! It does have a concept of a pivot spec, but currently it does not have anything to do with column type. `pivot_wider()` certainly could produce columns of disparate type, if it was instructed to implement a spec.*
+
+I read `deaths` in again, but universally as `character`, then use `pivot_longer()` on it.
+
+```{r}
+deaths_character <- read_csv(
+  "deaths.csv",
+  skip = 4, n_max = 10,
+  col_types = cols(.default = col_character())
+)
+
+deaths_character_long <- deaths_character %>% 
+  rowid_to_column() %>% 
+  pivot_longer(-rowid)
+deaths_character_long
+
+# another way to get an ID column, seen in rectangling vignette
+# deaths_character %>% 
+#   mutate(rowid = cumsum(name == "Name"))
+```
+
+Now we accomplish what a proper import would do, but with tidyr's toolkit. **Nope, no we don't, because `pivot_wider()` doesn't support this. At this point, we'd use readr's parsers on the columns.**
+
+```{r}
+deaths_character_long %>% 
+  pivot_wider(
+    id_cols = rowid,
+    )
+```
+
+### `unnest_wider()`
+
+First, prepare the deaths data: read in as character and then transpose.
+We get a list, with one component per row = person.
+
+```{r}
+deaths_character <- read_csv(
+  "deaths.csv",
+  skip = 4, n_max = 10,
+  col_types = cols(.default = col_character())
+)
+
+deaths_character_transpose <- deaths_character %>% 
+  transpose()
+head(deaths_character_transpose, 2)
+```
+
+Re-create `deaths_csv` via `unnest_wider()`.
+First, without worrying about column types.
+
+```{r}
+dat <- tibble(stuff = deaths_character_transpose)
+
+dat %>% 
+  unnest_wider(stuff)
+```
+
+Now we'll use `.transform` to get correct column types.
+
+```{r}
+deaths_wider <- dat %>% 
+  unnest_wider(
+    stuff,
+    transform = list(
+      Age = as.integer,
+      `Has kids` = as.logical,
+      `Date of birth` = ~ as.Date(.x, format = "%m/%d/%Y"),
+      `Date of death` = ~ as.Date(.x, format = "%m/%d/%Y")
+      )
+  )
+deaths_wider
+
+waldo::compare(deaths_csv, deaths_wider)
+```
+
+There's also a `ptype` argument that is currently used just for checking.
+But I wonder, if for simple `as.WHATEVER` transformations, if it could do double duty?
+
+## For discussion
+
+Emulating readr's DSL fully feels like the (a?) right answer for readxl and googlesheets4.
+But currently a readr col spec is very much expressed in terms of readr-only objects, e.g. collectors.
+
+Do we have an appetite for extracting col spec into something more abstract?
+tidyr's "wider/hoist spec" starts to hint at this.
+
+What about transmitting more re: the input to the resulting column?
+I'm talking about dates, datetimes, (in the future) percentage, currency, rounding / scientific notation.
