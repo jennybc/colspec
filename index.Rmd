@@ -331,5 +331,7 @@ From old google doc:
 * Col spec can be constructed *de novo* or discovered from an object
 * Shared infrastructure re: problems, i.e. what happens when a spec meets real world data?
 
+What are other functions / packages that should be on the radar re: col spec?
+
 What about transmitting more re: the input to the resulting column?
 I'm talking about dates, datetimes, (in the future) percentage, currency, rounding / scientific notation.
